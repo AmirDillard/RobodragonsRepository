@@ -2,7 +2,7 @@
 #                                                                              #
 # 	Module:       main.py                                                      #
 # 	Author:       Robodragons                                                          #
-# 	Updated:      1/3/2024, 7:32:00 PM                                         #
+# 	Updated:      1/4/2024, 11:12:00 AM                                         #
 # 	Description:  V5 project                                                   #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
@@ -10,7 +10,7 @@
 # Library imports
 from vex import *
 
-import urandom
+import random
 
 # Brain should be defined by default
 brain=Brain()
@@ -119,6 +119,7 @@ rc_auto_loop_thread_controller_1 = Thread(rc_auto_loop_function_controller_1)
 from vex import *
 
 # Begin project code
+
 #Functions
 def linear_movement(distance):
    brain.screen.clear_screen()
@@ -212,19 +213,12 @@ def user_control():
        rightMotors.set_velocity(rightSpeed, PERCENT)
        rightMotors.spin(FORWARD)
        leftMotors.spin(FORWARD)
-       """
-       if controller_1.buttonA.pressing():
-          brain.screen.print("Pneumatic Button: Pressed")
-          digital_out.set(True)
-          wait(5, SECONDS)
-          digital_out.set(False)
-       """
 
-#Thread Section
+
+# Thread Section
 pneumaticControl = Thread(pneumatic)
 intakeControl = Thread(intake_ball)
         
-# create competition instance
+# Competition Instance
 comp = Competition(user_control, autonomous)
 pre_autonomous()
-        
