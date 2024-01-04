@@ -1,8 +1,8 @@
 # ---------------------------------------------------------------------------- #
 #                                                                              #
 # 	Module:       main.py                                                      #
-# 	Author:       amir                                                         #
-# 	Created:      1/3/2024, 9:30:43 AM                                         #
+# 	Author:       Robodragons                                                          #
+# 	Updated:      1/4/2024, 11:12:00 AM                                         #
 # 	Description:  V5 project                                                   #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
@@ -10,8 +10,7 @@
 # Library imports
 from vex import *
 
-import urandom
-
+import random
 
 # Brain should be defined by default
 brain=Brain()
@@ -120,6 +119,7 @@ rc_auto_loop_thread_controller_1 = Thread(rc_auto_loop_function_controller_1)
 from vex import *
 
 # Begin project code
+
 #Functions
 def linear_movement(distance):
    brain.screen.clear_screen()
@@ -163,6 +163,7 @@ def output_ball():
    rightIntake.set_velocity(90, PERCENT)
    intakeGroup = MotorGroup(leftIntake, rightIntake)
    intakeGroup.spin_for(REVERSE, 1, TURNS)
+
 """
 def :
    brain.screen.print("Turning")
@@ -172,6 +173,15 @@ def :
    rightMotors.spin_for(FORWARD, turnCounter, TURNS)
    leftMotors.spin_for(REVERSE, turnCounter, TURNS)
 """
+
+def pneumatic():
+    while True:
+        if controller_1.buttonA.pressing():
+            brain.screen.print("Pneumatic Button: Pressed")
+            digital_out.set(True)
+            wait(5, SECONDS)
+            digital_out.set(False)
+       
 #Robot Competition Phases
 def pre_autonomous():
    # actions to do when the program starts
@@ -203,17 +213,12 @@ def user_control():
        rightMotors.set_velocity(rightSpeed, PERCENT)
        rightMotors.spin(FORWARD)
        leftMotors.spin(FORWARD)
-       if controller_1.buttonA.pressing():
-          brain.screen.print("Pneumatic Button: Pressed")
-          digital_out.set(True)
-          wait(5, SECONDS)
-          digital_out.set(False)
 
-# create competition instance
+
+# Thread Section
+pneumaticControl = Thread(pneumatic)
+intakeControl = Thread(intake_ball)
+        
+# Competition Instance
 comp = Competition(user_control, autonomous)
 pre_autonomous()
-
-
-
-
-        
