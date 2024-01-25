@@ -1,27 +1,25 @@
 # ---------------------------------------------------------------------------- #
 #                                                                              #
 # 	Module:       main.py                                                      #
-# 	Author:       Robodragons                                                          #
-# 	Updated:      1/4/2024, 11:12:00 AM                                         #
-# 	Description:  Vex project                                                   #
+# 	Author:       amir                                                         #
+# 	Created:      1/22/2024, 4:08:04 PM                                        #
+# 	Description:  V5 project                                                   #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
 
 # Library imports
 from vex import *
 
-import random
-
 # Brain should be defined by default
 brain=Brain()
+
 
 
 # Robot configuration code
 claw_motor = Motor(Ports.PORT18, GearSetting.RATIO_18_1, False)
 arm_motor = Motor(Ports.PORT8, GearSetting.RATIO_18_1, False)
 controller_1 = Controller(PRIMARY)
-leftIntake = Motor(Ports.PORT7, GearSetting.RATIO_18_1, True)
-rightIntake = Motor(Ports.PORT6, GearSetting.RATIO_18_1, False)
+Intake = Motor(Ports.PORT7, GearSetting.RATIO_18_1, True)
 leftMotors_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
 leftMotors_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
 leftMotors = MotorGroup(leftMotors_motor_a, leftMotors_motor_b)
@@ -53,11 +51,11 @@ print("\033[2J")
 # define variables used for controlling motors based on controller inputs
 controller_1_left_shoulder_control_motors_stopped = True
 controller_1_right_shoulder_control_motors_stopped = True
-
+autonactive = True
 
 # define a task that will handle monitoring inputs from controller_1
 def rc_auto_loop_function_controller_1():
-   global controller_1_left_shoulder_control_motors_stopped, controller_1_right_shoulder_control_motors_stopped, remote_control_code_enabled
+   global controller_1_left_shoulder_control_motors_stopped, controller_1_right_shoulder_control_motors_stopped, remote_control_code_enabled, autonactive
    # process the controller input every 20 milliseconds
    # update the motors based on the input values
    while True:
@@ -65,52 +63,46 @@ def rc_auto_loop_function_controller_1():
            # check the buttonL1/buttonL2 status
            # to control leftIntake
            if controller_1.buttonL1.pressing():
-               leftIntake.spin(FORWARD)
+               Intake.set_velocity(100, PERCENT)
+               Intake.spin(FORWARD)
                controller_1_left_shoulder_control_motors_stopped = False
-               rightIntake.spin(FORWARD)
                controller_1_right_shoulder_control_motors_stopped = False
            elif controller_1.buttonL2.pressing():
-               leftIntake.spin(REVERSE)
+               Intake.spin(REVERSE)
                controller_1_left_shoulder_control_motors_stopped = False
-               rightIntake.spin(REVERSE)
                controller_1_right_shoulder_control_motors_stopped = False
            elif not controller_1_left_shoulder_control_motors_stopped:
-               leftIntake.stop()
-               rightIntake.stop()
+               Intake.set_velocity(100, PERCENT)
+               Intake.stop()
                # set the toggle so that we don't constantly tell the motor to stop when
                # the buttons are released
                controller_1_left_shoulder_control_motors_stopped = True
                controller_1_right_shoulder_control_motors_stopped = True
-           if controller_1.buttonB.pressing():    
-               launch_motor.set_velocity(100, PERCENT)
-               launch_motor.spin(REVERSE)
-           else:
-               launch_motor.stop()
-           if controller_1.buttonA.pressing():
+           if autonactive == False :
+               if controller_1.buttonB.pressing():   
+                     launch_motor.set_velocity(100, PERCENT)
+                     launch_motor.spin(FORWARD)
+                     
+                     
+               if not controller_1.buttonB.pressing():
+                     launch_motor.stop()
+
+           if controller_1.buttonR1.pressing():
                brain.screen.clear_screen()
                brain.screen.print("Pneumatic Button: Pressed")
                digital_out.set(True)
+               """
                wait(5, SECONDS)
                digital_out.set(False)
+               """
+           else :
+               digital_out.set(False)
             
-           """
-            # X button Intake Mechanism
-           if controller_1.buttonX.pressing():
-               Intake = MotorGroup(leftIntake, rightIntake)
-               Intake.set_velocity(80, PERCENT)
-               Intake.spin_for(REVERSE, 1.5, SECONDS)
-            # Y button Output Mechanism 
-           if controller_1.buttonY.pressing():
-               Intake = MotorGroup(leftIntake, rightIntake)
-               Intake.set_velocity(90, PERCENT)
-               Intake.spin_for(FORWARD, 1.5, SECONDS)
-          """
 
-       wait(20, MSEC)
 
 
        # wait before repeating the process
-       wait(20, MSEC)
+       wait(10, MSEC)
 
 
 # define variable for remote controller enable/disable
@@ -118,17 +110,18 @@ remote_control_code_enabled = True
 
 
 rc_auto_loop_thread_controller_1 = Thread(rc_auto_loop_function_controller_1)
+autonthread = Thread(autonactive)
 
 #Functions
 def linear_movement(distance):
    brain.screen.clear_screen()
    brain.screen.set_cursor(1,1)
    brain.screen.print("Linear Movement")
-   distance2 = distance * 40
+   distance2 = distance * 24
    circumference = 3.25 * 3.14
    rotation = distance2 / circumference
-   leftMotors.set_velocity(80, PERCENT)
-   rightMotors.set_velocity(80, PERCENT)
+   leftMotors.set_velocity(100, PERCENT)
+   rightMotors.set_velocity(100, PERCENT)
    allmotors = MotorGroup(rightMotors_motor_a, rightMotors_motor_b, leftMotors_motor_a, leftMotors_motor_b)
    allmotors.spin_for(FORWARD, rotation, TURNS)
    brain.screen.clear_screen()
@@ -155,19 +148,17 @@ def intake_ball():
    brain.screen.clear_screen()
    brain.screen.set_cursor(1,1)
    brain.screen.print("Intake tri-ball")
-   leftIntake.set_velocity(90, PERCENT)
-   rightIntake.set_velocity(90, PERCENT)
-   intakeGroup = MotorGroup(leftIntake, rightIntake)
+   Intake.set_velocity(90, PERCENT)
+   intakeGroup = MotorGroup(Intake)
    intakeGroup.spin_for(REVERSE, 1, TURNS)
 
 def output_ball():
    brain.screen.clear_screen()
    brain.screen.set_cursor(1,1)
    brain.screen.print("Output tri-ball")
-   leftIntake.set_velocity(90, PERCENT)
-   rightIntake.set_velocity(90, PERCENT)
-   intakeGroup = MotorGroup(leftIntake, rightIntake)
-   intakeGroup.spin_for(FORWARD, 5, TURNS)
+   Intake.set_velocity(100, PERCENT)
+   intakeGroup = MotorGroup(Intake)
+   intakeGroup.spin_for(FORWARD, 4, TURNS)
 
 def pneumatic():
     while True:
@@ -177,14 +168,6 @@ def pneumatic():
             digital_out.set(True)
             wait(5, SECONDS)
             digital_out.set(False)
-
-""""
-def spin_launcher():
-      launch_motor = Motor(Ports.PORT11, GearSetting.RATIO_6_1, False)
-      launch_motor.set_velocity(50, PERCENT)
-      launch_motor.spin(FORWARD)
-"""
-
        
 #Robot Competition Phases
 def pre_autonomous():
@@ -193,45 +176,33 @@ def pre_autonomous():
    brain.screen.print("Pre Auton mode")
    wait(1, SECONDS)
 
-
-def left_autonomous():
-   block = 0.32
+def skills_autonomous():
+   global autonactive
+   autonactive = True
    brain.screen.clear_screen()
    brain.screen.set_cursor(1,1)
-   brain.screen.print("Autonomous : Left Side")
-   leftMotors.spin_for(FORWARD, .5, TURNS)
-   linear_movement(block * 1.1)
-   leftMotors.spin_for(REVERSE, .4, TURNS)
-   linear_movement(0.2)
+   brain.screen.print("Autonomous mode")
+   allmotors.set_velocity(100, PERCENT)
+   allmotors.spin_for(FORWARD, .5, SECONDS)
    output_ball()
-   linear_movement(.4)
-   linear_movement(-.4)
+   allmotors.spin_for(REVERSE, .5, SECONDS)
+   turn_counter(-3)
+   launch_motor.set_velocity(100, PERCENT)
+   launch_motor.spin_for(FORWARD, 60, SECONDS)
 
-
-def right_autonomous():
-   block = 0.32
-   brain.screen.clear_screen()
-   brain.screen.set_cursor(1,1)
-   brain.screen.print("Autonomous : Right Side")
-   rightMotors.spin_for(FORWARD, .5, TURNS)
-   linear_movement(block * 1.1)
-   rightMotors.spin_for(REVERSE, .4, TURNS)
-   linear_movement(0.2)
-   output_ball()
-   linear_movement(.4)
-   linear_movement(-.4)
-
-
+   
 def user_control():
+   global autonactive 
    brain.screen.clear_screen()
    brain.screen.set_cursor(1,1)
    brain.screen.print("Driver Control mode")
+   autonactive = False
    # place driver control in this while loop
    while True:
-       straight = controller_1.axis3.position()
-       turn = controller_1.axis1.position()
-       leftSpeed =  straight + turn
-       rightSpeed = straight - turn
+       straight = controller_1.axis3.position() 
+       turn = controller_1.axis1.position() * .65
+       leftSpeed =  (straight + turn) 
+       rightSpeed = (straight - turn)
        leftMotors.set_velocity(leftSpeed, PERCENT)
        rightMotors.set_velocity(rightSpeed, PERCENT)
        rightMotors.spin(FORWARD)
@@ -243,7 +214,6 @@ pneumaticControl = Thread(pneumatic)
 
 # Competition Instance
 
-autonomous = right_autonomous
-
+autonomous = skills_autonomous
 Comp = Competition(user_control, autonomous)
-pre_autonomous()
+
